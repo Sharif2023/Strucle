@@ -1,6 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import { useEditorStore } from '../../store/editorStore';
-import type { LayoutNode } from '../../model/types';
 import CanvasNode from './CanvasNode';
 
 const Canvas: React.FC = () => {

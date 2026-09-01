@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import type { LayoutNode } from '../../model/types';
 import ResizeHandles from './ResizeHandles';
@@ -8,7 +8,7 @@ interface CanvasNodeProps {
 }
 
 const CanvasNode: React.FC<CanvasNodeProps> = ({ node }) => {
-  const { selectedNodeId, selectNode, updateNodeLayout } = useEditorStore();
+  const { selectedNodeId, selectNode } = useEditorStore();
   const isSelected = selectedNodeId === node.id;
   const nodeRef = useRef<HTMLDivElement>(null);
   const layout = node.layout || { display: 'block' };
@@ -63,7 +63,7 @@ const CanvasNode: React.FC<CanvasNodeProps> = ({ node }) => {
       onClick={handleSelect}
       className={`${isSelected ? 'ring-2 ring-blue-500 z-10' : ''}`}
     >
-      {node.type !== 'container' && node.type !== 'root' && (
+      {node.type !== 'container' && (
         <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-medium text-sm pointer-events-none">
           {node.name || node.type}
         </div>

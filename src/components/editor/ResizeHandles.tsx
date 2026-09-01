@@ -4,7 +4,7 @@ import { useEditorStore } from '../../store/editorStore';
 
 interface ResizeHandlesProps {
   node: LayoutNode;
-  nodeRef: React.RefObject<HTMLDivElement>;
+  nodeRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const ResizeHandles: React.FC<ResizeHandlesProps> = ({ node, nodeRef }) => {

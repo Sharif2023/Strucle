@@ -18,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ onExport }) => {
         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
           <LayoutTemplate size={18} />
         </div>
-        <span className="font-bold text-lg tracking-tight">structly</span>
+        <span className="font-bold text-lg tracking-tight">strucle</span>
       </div>
       
       <div className="flex items-center gap-2">
