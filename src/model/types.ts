@@ -43,6 +43,7 @@ export type LayoutNode = {
     borderRadius?: number;
     borderWidth?: number;
     backgroundColor?: string;
+    zIndex?: number;
   };
   
   gridPlacement?: {

@@ -7,6 +7,7 @@ interface EditorState {
   selectedNodeId: string | null;
   history: LayoutNode[];
   historyIndex: number;
+  clipboardNode: LayoutNode | null;
   
   // Actions
   selectNode: (id: string | null) => void;
@@ -15,6 +16,10 @@ interface EditorState {
   addNode: (parentId: string, type: LayoutNode['type']) => void;
   deleteNode: (id: string) => void;
   moveNode: (id: string, targetParentId: string, index?: number) => void;
+  
+  copyNode: () => void;
+  cutNode: () => void;
+  pasteNode: () => void;
   
   undo: () => void;
   redo: () => void;
@@ -121,7 +126,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       id: nanoid(6),
       name: `New ${type}`,
       type,
-      layout: type === 'container' ? { display: 'flex', flexDirection: 'column', gap: 16 } : { display: 'block', width: 200, height: 100 },
+      layout: type === 'container' 
+        ? { display: 'flex', flexDirection: 'column', gap: 16, width: 400, height: 300 } 
+        : { display: 'block', width: 200, height: 100 },
+      position: { x: 50, y: 50 },
       children: type === 'container' ? [] : undefined
     };
     
@@ -225,5 +233,66 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         historyIndex: historyIndex + 1
       });
     }
+  },
+
+  clipboardNode: null,
+
+  copyNode: () => {
+    const { rootNode, selectedNodeId } = get();
+    if (!selectedNodeId || selectedNodeId === 'root') return;
+    const { node } = findNodeAndParent(rootNode, selectedNodeId);
+    if (node) {
+      set({ clipboardNode: cloneNode(node) });
+    }
+  },
+
+  cutNode: () => {
+    const { rootNode, selectedNodeId, deleteNode } = get();
+    if (!selectedNodeId || selectedNodeId === 'root') return;
+    const { node } = findNodeAndParent(rootNode, selectedNodeId);
+    if (node) {
+      set({ clipboardNode: cloneNode(node) });
+      deleteNode(selectedNodeId);
+    }
+  },
+
+  pasteNode: () => {
+    const { rootNode, selectedNodeId, clipboardNode, history, historyIndex } = get();
+    if (!clipboardNode) return;
+
+    // determine parent
+    let parentId = selectedNodeId || 'root';
+    const { node: selectedNode } = findNodeAndParent(rootNode, parentId);
+    if (selectedNode && selectedNode.type !== 'container' && parentId !== 'root') {
+      const { parent } = findNodeAndParent(rootNode, parentId);
+      parentId = parent?.id || 'root';
+    }
+
+    const generateNewIds = (n: LayoutNode): LayoutNode => ({
+      ...n,
+      id: nanoid(6),
+      children: n.children ? n.children.map(generateNewIds) : undefined,
+      position: n.position ? { x: n.position.x + 20, y: n.position.y + 20 } : undefined
+    });
+
+    const pastedNode = generateNewIds(clipboardNode);
+
+    const newRoot = updateNodeTree(rootNode, parentId, (node) => {
+      if (node.type !== 'container') return node;
+      return {
+        ...node,
+        children: [...(node.children || []), pastedNode]
+      };
+    });
+
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(cloneNode(newRoot));
+
+    set({
+      rootNode: newRoot,
+      history: newHistory,
+      historyIndex: newHistory.length - 1,
+      selectedNodeId: pastedNode.id
+    });
   }
 }));

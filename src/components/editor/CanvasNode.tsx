@@ -18,11 +18,62 @@ const CanvasNode: React.FC<CanvasNodeProps> = ({ node }) => {
     selectNode(node.id);
   };
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (isRoot) return;
+    
+    // Ignore if clicking on a resize handle
+    if ((e.target as HTMLElement).tagName === 'DIV' && (e.target as HTMLElement).className.includes('cursor-')) {
+      return;
+    }
+
+    e.stopPropagation();
+    selectNode(node.id);
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initialPosX = node.position?.x || 0;
+    const initialPosY = node.position?.y || 0;
+
+    let moved = false;
+    let finalX = initialPosX;
+    let finalY = initialPosY;
+
+    const handlePointerMove = (ev: PointerEvent) => {
+      moved = true;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      
+      finalX = initialPosX + dx;
+      finalY = initialPosY + dy;
+
+      if (nodeRef.current) {
+        nodeRef.current.style.left = `${finalX}px`;
+        nodeRef.current.style.top = `${finalY}px`;
+      }
+    };
+
+    const handlePointerUp = () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      
+      if (moved) {
+        useEditorStore.getState().updateNode(node.id, {
+          position: { x: finalX, y: finalY }
+        });
+      }
+    };
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  };
+
   const isRoot = node.id === 'root';
   
   const getStyles = (): React.CSSProperties => {
     const s: React.CSSProperties = {
-      position: 'relative',
+      position: (node.position && !isRoot) ? 'absolute' : 'relative',
+      left: node.position && !isRoot ? `${node.position.x}px` : undefined,
+      top: node.position && !isRoot ? `${node.position.y}px` : undefined,
       width: layout.width ? `${layout.width}px` : (layout.display === 'block' ? '100%' : 'auto'),
       height: layout.height ? `${layout.height}px` : 'auto',
       minHeight: node.type === 'container' && !layout.height ? '100px' : undefined,
@@ -43,14 +94,19 @@ const CanvasNode: React.FC<CanvasNodeProps> = ({ node }) => {
 
     if (!isRoot) {
       if (node.type === 'container') {
-        s.border = '1px dashed #cbd5e1';
+        s.border = '1px dashed rgba(255, 255, 255, 0.2)';
+        s.backgroundColor = 'rgba(255, 255, 255, 0.02)';
       } else {
-        s.border = '1px solid #cbd5e1';
-        s.backgroundColor = '#f8fafc';
+        s.border = '1px solid rgba(255, 255, 255, 0.1)';
+        s.backgroundColor = 'rgba(24, 24, 27, 0.8)';
+        s.backdropFilter = 'blur(8px)';
       }
     } else {
-      s.backgroundColor = 'white';
-      s.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)';
+      s.backgroundColor = 'transparent';
+    }
+
+    if (node.style?.zIndex !== undefined) {
+      s.zIndex = node.style.zIndex;
     }
     
     return s;
@@ -61,6 +117,7 @@ const CanvasNode: React.FC<CanvasNodeProps> = ({ node }) => {
       ref={nodeRef}
       style={getStyles()}
       onClick={handleSelect}
+      onPointerDown={handlePointerDown}
       className={`${isSelected ? 'ring-2 ring-blue-500 z-10' : ''}`}
     >
       {node.type !== 'container' && (
