@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useEditorStore } from '../store/editorStore';
 
 export const useKeyboardShortcuts = () => {
-  const { selectedNodeId, deleteNode, undo, redo } = useEditorStore();
+  const { selectedNodeIds, deleteNodes, undo, redo, copyNodes, cutNodes, pasteNodes, duplicateNodes } = useEditorStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -16,9 +16,9 @@ export const useKeyboardShortcuts = () => {
       }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedNodeId && selectedNodeId !== 'root') {
+        if (selectedNodeIds.length > 0) {
           e.preventDefault();
-          deleteNode(selectedNodeId);
+          deleteNodes(selectedNodeIds);
         }
       }
 
@@ -34,19 +34,25 @@ export const useKeyboardShortcuts = () => {
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
         e.preventDefault();
-        useEditorStore.getState().copyNode();
+        copyNodes();
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
         e.preventDefault();
-        useEditorStore.getState().cutNode();
+        cutNodes();
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
         e.preventDefault();
-        useEditorStore.getState().pasteNode();
+        pasteNodes();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        if (selectedNodeIds.length > 0) {
+          duplicateNodes(selectedNodeIds);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId, deleteNode, undo, redo]);
+  }, [selectedNodeIds, deleteNodes, undo, redo, copyNodes, cutNodes, pasteNodes, duplicateNodes]);
 };

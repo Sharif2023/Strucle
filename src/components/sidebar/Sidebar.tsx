@@ -4,11 +4,11 @@ import { useEditorStore } from '../../store/editorStore';
 import { LayerTree } from './LayerTree';
 
 const Sidebar: React.FC = () => {
-  const { addNode, selectedNodeId, rootNode } = useEditorStore();
+  const { addNode, selectedNodeIds, rootNode } = useEditorStore();
   const [activeTab, setActiveTab] = useState<'elements' | 'structure'>('elements');
   
   // Use root node as default parent if nothing is selected
-  const parentId = selectedNodeId || rootNode.id;
+  const parentId = selectedNodeIds.length > 0 ? selectedNodeIds[selectedNodeIds.length - 1] : rootNode.id;
 
   const elements = [
     { type: 'container', icon: Columns, label: 'Container', desc: 'Flex/Grid structural box' },
